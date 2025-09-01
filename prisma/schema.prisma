@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  email    String    @unique
+  name     String
+  password String
+  role     Role      @default(USER)
+  orders   Order[]
+  payment  Payment[]
+}
+
+model Product {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Int
+  description String?
+  imgUrl      String?
+  orders      Order[]
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+  BKASH
+  COD
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Payment {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  amount        Float
+  paymentMethod PaymentMethod @default(COD)
+  status        PaymentStatus @default(PENDING)
+  transactionId String        @unique
+
+  orders Order[]
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String? @db.ObjectId
+}
+
+enum OrderStatus {
+  DELIVERED
+  PENDING
+  CANCELLED
+}
+
+model Order {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  Product   Product? @relation(fields: [productId], references: [id])
+  productId String?  @db.ObjectId
+  Payment   Payment? @relation(fields: [paymentId], references: [id])
+  paymentId String?  @db.ObjectId
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+
+  orderStatus OrderStatus @default(PENDING)
+}
